@@ -8,7 +8,7 @@ async function checkToken(req, res, next) {
 	}
 	try {
 		const t = token.split(" ")[1];
-		const decoded = jwt.verify(token.split(" ")[1], "secret_key"); // Verify token
+		const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET); // Verify token
 		console.log(decoded);
 		const user = await User.findOne({ _id: decoded.userId, token: t }); // Check if token exists in MongoDB
 		if (!user) {

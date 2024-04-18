@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
@@ -16,7 +17,7 @@ app.use(cors(corsOptions));
 app.use("/auth", AuthRouter);
 
 mongoose
-	.connect("mongodb://localhost:27017/DNS")
+	.connect(process.env.MONGO_URL)
 	.then((res) => {
 		app.listen(5000, () => {
 			console.log("server connected");
