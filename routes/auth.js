@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
 const { User } = require("../db/login");
 const checkToken = require("../jwt");
 router.post("/signup", (req, res, next) => {
@@ -10,15 +12,22 @@ router.post("/signup", (req, res, next) => {
 		if (data) {
 			res.json({ error: true, message: "User Already Exists" });
 		} else {
-			const newUser = new User({
-				email: email,
-				password: password,
-			});
-			newUser
-				.save()
-				.then((success) => {
-					res.json({ error: null, message: "Sign up Successful" });
-					console.log("user added");
+			bcrypt
+				.hash(password, 12)
+				.then((pass) => {
+					const newUser = new User({
+						email: email,
+						password: pass,
+					});
+					newUser
+						.save()
+						.then((success) => {
+							res.json({ error: null, message: "Sign up Successful" });
+							console.log("user added");
+						})
+						.catch((err) => {
+							console.log(err);
+						});
 				})
 				.catch((err) => {
 					console.log(err);
@@ -34,7 +43,9 @@ router.post("/login", (req, res, next) => {
 	User.findOne({ email }).then((data) => {
 		if (data) {
 			console.log(data);
-			if (data.password === password) {
+			bcrypt.compare(password, data.password).then((result) => {
+				if (!result)
+					return res.json({ error: true, message: "Password do not match!" });
 				const token = jwt.sign(
 					{ userId: data._id, email: email },
 					process.env.JWT_SECRET,
@@ -49,9 +60,7 @@ router.post("/login", (req, res, next) => {
 						items: data.items || null,
 					});
 				});
-			} else {
-				res.json({ error: true, message: "Password do not match!" });
-			}
+			});
 		} else {
 			res.json({ error: true, message: "Email Id not found!" });
 			console.log(" login error: user doesnot exist");
